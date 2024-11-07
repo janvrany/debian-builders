@@ -1,0 +1,6 @@
+config-local.sh
+tmp
+image
+root
+*.img
+*.qcow2
