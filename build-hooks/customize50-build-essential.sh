@@ -2,6 +2,8 @@
 #
 # Install build tools and dev libraries
 #
+set -e
+
 source "$(dirname $(realpath ${BASH_SOURCE[0]}))/../toolbox/functions.sh"
 config "$(dirname $0)/../config.sh" || error "Cannot read config.sh: $1"
 config "$(dirname $0)/../config-local.sh"
@@ -31,8 +33,7 @@ PACKAGES_GDB="  python3-dev,
 #
 # See https://jan.vrany.io/stx/wiki/Documentation/BuildingStXWithRakefiles#Debianonx86_64andotherderivativessuchasUbuntuorMint
 #
-PACKAGES_STX="  rake,
-                pkg-config,
+PACKAGES_STX="  pkg-config,
                 libc6-dev,
                 libx11-dev,
                 libxext-dev,
@@ -71,7 +72,7 @@ PACKAGES="      libc6,
 #
 chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
     build-essential git cmake ninja-build pkg-config libglib2.0-dev gdb ccache curl \
-    bison flex dejagnu texinfo
+    bison flex dejagnu texinfo rake cvs ant
 
 #
 # Create sysroot for each architecture
@@ -105,11 +106,28 @@ for arch in $CONFIG_BUILD_ARCHS; do
         #
         # Create sysroot
         #
-        sysroot="${ROOT}$(qemu-$arch-static --help | grep ^QEMU_LD_PREFIX | sed -e 's#^.*= /#/#g')"
-        mkdir -p "$sysroot"
+        # Here we install sysroot into directory used by qemu by default
+        # (so we do not have pass down -L parameter or set QEMU_LD_PREFIX).
+        # However, that default differs:
+        #
+        #  * /usr/gnemul/qemu-$arch (on Debian Trixie)
+        #  * /etc/qemu-binfmt/$arch (on Debian Bookworm)
+        #
+        # So, we put stuff to /usr/gnemul and create symlink for compatibility.
+        # Sigh.
+        sysroot="/usr/gnemul/qemu-$arch"
+        sysroot_alt="/etc/qemu-binfmt/$arch"
+        mkdir -p "${ROOT}/$sysroot"
         bash "$(dirname $(realpath ${BASH_SOURCE[0]}))/../scripts/build-sysroot.sh" \
             -a "$arch" \
-            -d "$sysroot" \
+            -d "${ROOT}/$sysroot" \
             -p "$PACKAGES"
+        if [[ "$arch" == "riscv64" ]]; then
+            sudo wget "-O${ROOT}/$sysroot/usr/include/riscv.h" 'https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;a=blob_plain;f=include/opcode/riscv.h;hb=2f973f134d7752cbc662ec65da8ad8bbe4c6fb8f'
+            sudo wget "-O${ROOT}/$sysroot/usr/include/riscv-opc.h" 'https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;a=blob_plain;f=include/opcode/riscv-opc.h;hb=2f973f134d7752cbc662ec65da8ad8bbe4c6fb8f'
+        fi
+
+        mkdir -p "${ROOT}/$(dirname $sysroot_alt)"
+        (cd "${ROOT}/$(dirname $sysroot_alt)" && ln -s "$sysroot" $(basename $sysroot_alt))
     fi
 done
