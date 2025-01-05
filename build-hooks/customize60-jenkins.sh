@@ -33,7 +33,8 @@ if [ -f "$CONFIG_JENKINS_PUBKEY" ]; then
 	echo "Installing public key..."
 	sudo mkdir -p                 "${ROOT}/var/lib/jenkins/.ssh"
 	sudo cp "$CONFIG_JENKINS_PUBKEY" "${ROOT}/var/lib/jenkins/.ssh/authorized_keys"
-	sudo chown -R "$JENKINS_UID" "${ROOT}/var/lib/jenkins/.ssh"
+	sudo chown -R "$CONFIG_JENKINS_UID:$CONFIG_JENKINS_GID" \
+	                             "${ROOT}/var/lib/jenkins/.ssh"
 	sudo chmod -R go-rwx         "${ROOT}/var/lib/jenkins/.ssh"
 	sudo chmod -R u=rw           "${ROOT}/var/lib/jenkins/.ssh"
 	sudo chmod    u=rwx          "${ROOT}/var/lib/jenkins/.ssh"
