@@ -22,23 +22,36 @@ sudo chroot "${ROOT}" useradd  --uid "$CONFIG_JENKINS_UID" --gid "$CONFIG_JENKIN
 echo "AllowUsers jenkins" | sudo tee "$ROOT/etc/ssh/sshd_config.d/jenkins.conf"
 
 #
-# Allow $USER to sudo as any user
+# Allow user `jenkins` to install packages
 #
 echo "
-jenkins     ALL=(root) NOPASSWD: /usr/bin/apt install *, /usr/bin/apt-get install *,/usr/bin/apt -y install *, /usr/bin/apt-get -y install *
+jenkins     ALL=(root) NOPASSWD: /usr/bin/apt install *, /usr/bin/apt-get install *,/usr/bin/apt -y install *, /usr/bin/apt-get -y install *, /usr/bin/apt update, /usr/bin/apt-get update, dpkg --add-architecture *
 " | sudo tee "${ROOT}/etc/sudoers.d/jenkins"
 
 
+#
+# Create ~jenkins/.ssh and default config
+#
+sudo mkdir -p "${ROOT}/var/lib/jenkins/.ssh"
+echo "
+Host *
+  #
+  # Turn off host key checking. This avoids ssh client refusing to connect
+  # because of not-yet-known host keys - this happens first time a CI job is
+  # checking out stuff or similar and this causing job to fail.
+  # Not great, but we do now want such failure nor we want to manually connect
+  # to build node and accept the key each time we rebuild the builder image.
+  #
+  StrictHostKeyChecking off
+" | sudo tee "${ROOT}/var/lib/jenkins/.ssh/config"
 if [ -f "$CONFIG_JENKINS_PUBKEY" ]; then
 	echo "Installing public key..."
-	sudo mkdir -p                 "${ROOT}/var/lib/jenkins/.ssh"
 	sudo cp "$CONFIG_JENKINS_PUBKEY" "${ROOT}/var/lib/jenkins/.ssh/authorized_keys"
-	sudo chown -R "$CONFIG_JENKINS_UID:$CONFIG_JENKINS_GID" \
-	                             "${ROOT}/var/lib/jenkins/.ssh"
-	sudo chmod -R go-rwx         "${ROOT}/var/lib/jenkins/.ssh"
-	sudo chmod -R u=rw           "${ROOT}/var/lib/jenkins/.ssh"
-	sudo chmod    u=rwx          "${ROOT}/var/lib/jenkins/.ssh"
 fi
+sudo chown -R "$CONFIG_JENKINS_UID:$CONFIG_JENKINS_GID" "${ROOT}/var/lib/jenkins/.ssh"
+sudo chmod -R go-rwx                                    "${ROOT}/var/lib/jenkins/.ssh"
+sudo chmod -R u=rw                                      "${ROOT}/var/lib/jenkins/.ssh"
+sudo chmod    u=rwx                                     "${ROOT}/var/lib/jenkins/.ssh"
 
 echo "Installing JDK"
 sudo chroot "${ROOT}" /usr/bin/apt-get -y install \
