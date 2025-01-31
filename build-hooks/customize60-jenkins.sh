@@ -47,7 +47,18 @@ Host *
 if [ -f "$CONFIG_JENKINS_PUBKEY" ]; then
 	echo "Installing public key..."
 	sudo cp "$CONFIG_JENKINS_PUBKEY" "${ROOT}/var/lib/jenkins/.ssh/authorized_keys"
+else
+  sudo touch "${ROOT}/var/lib/jenkins/.ssh/authorized_keys"
 fi
+
+# Install $USER public key for user jenkins to allow login
+# as jenkins (for interactive debugging or similar)
+for pubkey in id_rsa.pub id_dsa.pub; do
+  if [ -r "$HOME/.ssh/$pubkey" ]; then
+    cat "$HOME/.ssh/$pubkey" | sudo tee -a "${ROOT}/var/lib/jenkins/.ssh/authorized_keys"
+  fi
+done
+
 sudo chown -R "$CONFIG_JENKINS_UID:$CONFIG_JENKINS_GID" "${ROOT}/var/lib/jenkins/.ssh"
 sudo chmod -R go-rwx                                    "${ROOT}/var/lib/jenkins/.ssh"
 sudo chmod -R u=rw                                      "${ROOT}/var/lib/jenkins/.ssh"

@@ -28,3 +28,15 @@ sudo chroot "${ROOT}" chown $CONFIG_BUILD_USER:$CONFIG_BUILD_USER "$CONFIG_BUILD
 echo "
 $CONFIG_BUILD_USER     ALL=(root) NOPASSWD: /usr/bin/apt install *, /usr/bin/apt-get install *,/usr/bin/apt -y install *, /usr/bin/apt-get -y install *
 " | sudo tee "${ROOT}/etc/sudoers.d/$CONFIG_BUILD_USER"
+
+#
+# Install SSH keys
+#
+HOME_IN_ROOT="$ROOT/$(grep $CONFIG_BUILD_USER "${ROOT}/etc/passwd" | cut -d : -f 6)"
+for pubkey in id_rsa.pub id_dsa.pub; do
+  if [ -r "$HOME/.ssh/$pubkey" ]; then
+   	sudo mkdir -p "$HOME_IN_ROOT/.ssh"
+	cat "$HOME/.ssh/$pubkey" | tee -a "$HOME_IN_ROOT/.ssh/authorized_keys"
+	chmod -R go-rwx "$HOME_IN_ROOT/.ssh"
+  fi
+done
