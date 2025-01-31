@@ -18,14 +18,14 @@ ensure_ROOT $1
 
 echo "Creating user jenkins..."
 sudo chroot "${ROOT}" groupadd --gid "$CONFIG_JENKINS_UID" --system jenkins
-sudo chroot "${ROOT}" useradd  --uid "$CONFIG_JENKINS_UID" --gid "$CONFIG_JENKINS_GID" --system --create-home --home-dir /var/lib/jenkins jenkins
+sudo chroot "${ROOT}" useradd  --uid "$CONFIG_JENKINS_UID" --gid "$CONFIG_JENKINS_GID" --system --create-home --home-dir /var/lib/jenkins --shell /usr/bin/bash /jenkins
 echo "AllowUsers jenkins" | sudo tee "$ROOT/etc/ssh/sshd_config.d/jenkins.conf"
 
 #
 # Allow user `jenkins` to install packages
 #
 echo "
-jenkins     ALL=(root) NOPASSWD: /usr/bin/apt install *, /usr/bin/apt-get install *,/usr/bin/apt -y install *, /usr/bin/apt-get -y install *, /usr/bin/apt update, /usr/bin/apt-get update, dpkg --add-architecture *
+jenkins     ALL=(root) NOPASSWD: /usr/bin/apt install *, /usr/bin/apt-get install *,/usr/bin/apt -y install *, /usr/bin/apt-get -y install *, /usr/bin/apt update, /usr/bin/apt-get update, /usr/bin/dpkg --add-architecture *
 " | sudo tee "${ROOT}/etc/sudoers.d/jenkins"
 
 
