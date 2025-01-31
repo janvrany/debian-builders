@@ -4,3 +4,5 @@ image
 root
 *.img
 *.qcow2
+customize*local*.sh
+deploy.sh
