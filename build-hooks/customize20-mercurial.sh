@@ -25,3 +25,24 @@ chroot "${ROOT}" "${CONFIG_MERCURIAL_INSTALL_DIR}/bin/pip" install \
 	mercurial hg-evolve
 
 (cd "${ROOT}/usr/local/bin" && ln -s "../../../${CONFIG_MERCURIAL_INSTALL_DIR}/bin/hg" .)
+
+#
+# Configure Mercurial
+#
+mkdir -p "${ROOT}/etc/mercurial/hgrc.d"
+echo "
+[extensions]
+share=
+shelve=
+histedit=
+rebase=
+evolve=
+topic=
+" | sudo tee "${ROOT}/etc/mercurial/hgrc.d/extensions.rc"
+
+echo "
+[ui]
+interface = curses
+editor = nano
+color = yes
+" | sudo tee "${ROOT}/etc/mercurial/hgrc.d/ui.rc"
