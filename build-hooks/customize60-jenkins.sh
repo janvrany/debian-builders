@@ -18,7 +18,7 @@ ensure_ROOT $1
 
 echo "Creating user jenkins..."
 sudo chroot "${ROOT}" groupadd --gid "$CONFIG_JENKINS_UID" --system jenkins
-sudo chroot "${ROOT}" useradd  --uid "$CONFIG_JENKINS_UID" --gid "$CONFIG_JENKINS_GID" --system --create-home --home-dir /var/lib/jenkins --shell /usr/bin/bash /jenkins
+sudo chroot "${ROOT}" useradd  --uid "$CONFIG_JENKINS_UID" --gid "$CONFIG_JENKINS_GID" --system --create-home --home-dir /var/lib/jenkins --shell /usr/bin/bash jenkins
 echo "AllowUsers jenkins" | sudo tee "$ROOT/etc/ssh/sshd_config.d/jenkins.conf"
 
 #
@@ -89,7 +89,7 @@ chroot "${ROOT}" systemctl enable var-lib-jenkins-workspace.mount
 
 echo "
 #
-# /var/var/lib/jenkins/workspace is auto-mounted using 'var-lib-jenkins-workspace.mount' unit
+# /var/lib/jenkins/workspace is auto-mounted using 'var-lib-jenkins-workspace.mount' unit
 #
 # To modify, disable or enable mount of /var/var/lib/jenkins/workspace use
 #
