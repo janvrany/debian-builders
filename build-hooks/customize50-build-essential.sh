@@ -82,8 +82,17 @@ for arch in $CONFIG_BUILD_ARCHS; do
         #
         # Setup toolchain for native builds
         #
-        chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
-            $(echo $PACKAGES | sed -s "s/,/ /g")
+
+        # Sigh, it seems that Trixie dropped package libdwarf-dev at some point.
+        if sudo chroot "${ROOT}" apt-cache pkgnames | grep -q "libdwarf-dev"; then
+            # Good, libdwarf-dev is available
+            chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
+                $(echo $PACKAGES | sed -e "s/,/ /g" )
+        else
+            # No, no libdwarf-dev :-(
+            chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
+                $(echo $PACKAGES | sed -e "s/,/ /g" -e 's/libdwarf-dev//g')
+        fi
     else
         #
         # Setup toolchain for cross-compiling
