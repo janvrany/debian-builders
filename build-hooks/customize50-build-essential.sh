@@ -60,7 +60,9 @@ PACKAGES_OMR="  zlib1g,
                 libxt-dev,
                 libasound2-dev,
                 libcups2-dev,
-                libfontconfig1-dev"
+                libfontconfig1-dev
+                file
+                "
 
 PACKAGES="      libc6,
                 ${PACKAGES_GDB},
@@ -70,7 +72,7 @@ PACKAGES="      libc6,
 #
 # Install common built tools. Note, that mercurial is installed separately
 #
-chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
+sudo chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
     build-essential git cmake ninja-build pkg-config libglib2.0-dev gdb ccache curl \
     bison flex dejagnu texinfo rake cvs ant
 
@@ -78,21 +80,26 @@ chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
 # Create sysroot for each architecture
 #
 for arch in $CONFIG_BUILD_ARCHS; do
-    if [[ "$arch" == "$(chroot "$ROOT" dpkg-architecture -q DEB_TARGET_ARCH)" ]]; then
+    sudo true
+    if [[ "$arch" == "$(/usr/bin/sudo chroot "$ROOT" dpkg-architecture -q DEB_TARGET_ARCH)" ]]; then
         #
         # Setup toolchain for native builds
         #
 
         # Sigh, it seems that Trixie dropped package libdwarf-dev at some point.
-        if sudo chroot "${ROOT}" apt-cache pkgnames | grep -q "libdwarf-dev"; then
-            # Good, libdwarf-dev is available
-            chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
-                $(echo $PACKAGES | sed -e "s/,/ /g" )
-        else
-            # No, no libdwarf-dev :-(
-            chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
-                $(echo $PACKAGES | sed -e "s/,/ /g" -e 's/libdwarf-dev//g')
-        fi
+        # Also, there's no libdebuginfod-dev and guile-3.0-dev in Bionic Beaver.
+        for p in libdwarf-dev libdebuginfod-dev guile-3.0-dev; do
+            if sudo chroot "${ROOT}" apt-cache pkgnames | grep -q "$p"; then
+                # Good, package $p is present
+                true
+            else
+                # No, no package $p :-(
+                PACKAGES=$(echo $PACKAGES | sed -e "s/${p}//g")
+            fi
+        done
+
+        sudo chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
+            $(echo $PACKAGES | sed -e "s/,/ /g")
     else
         #
         # Setup toolchain for cross-compiling
