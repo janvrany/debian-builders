@@ -1,0 +1,5 @@
+CONFIG_HOSTNAME=$(basename $(dirname $(realpath ${BASH_SOURCE[0]})))
+CONFIG_DEBIAN_RELEASE=bionic
+CONFIG_BUILD_ARCHS="amd64"
+CONFIG_VM_MEM=8G
+
