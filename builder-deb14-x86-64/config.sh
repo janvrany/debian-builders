@@ -1,0 +1,4 @@
+CONFIG_HOSTNAME=$(basename $(dirname $(realpath ${BASH_SOURCE[0]})))
+CONFIG_DEBIAN_RELEASE=forky
+CONFIG_BUILD_ARCHS="amd64 riscv64"
+CONFIG_VM_MEM=8G
