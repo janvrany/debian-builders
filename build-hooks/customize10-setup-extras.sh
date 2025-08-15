@@ -18,4 +18,4 @@ ensure_ROOT $1
 # Install NFS support and some monitoring tools
 #
 chroot "${ROOT}" /usr/bin/apt-get --allow-unauthenticated -y install \
-	nfs-common htop btop iotop
+	nfs-common htop iotop
